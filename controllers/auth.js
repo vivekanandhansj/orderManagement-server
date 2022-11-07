@@ -19,7 +19,7 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     //1. check name
-    const user = await User.findOne({ name: req.body.name });
+    const user = await User.findOne({ email: req.body.email });
     //2. user not found
     if (!user) return next(createError(404, "User not found!"));
     // user found
@@ -28,14 +28,13 @@ export const login = async (req, res, next) => {
     //4.  whether password wrong
     if (!isCorrect) return next(createError(400, "Wrong Credentials!"));
     //5. JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT);
-    const { password, ...others } = user._doc;
-    res
-      .cookie("access_token", token, {
-        httpOnly: true,
-      })
-      .status(200)
-      .json(others);
+    let token = jwt.sign(
+      { name: user.name, id: user._id },
+      process.env.JWT,
+      { expiresIn: "1h" }
+    );
+    res.json({ token }).status(200);
+  
   } catch (err) {
     next(err);
   }
